@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riloox's Basic Tierlist Creator</title>
+    <title>Tierlist Creator</title>
     <style>
         :root {
             --s-tier: #ff7f7f;
@@ -37,12 +37,75 @@
         header {
             text-align: center;
             margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .title-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 10px;
         }
         
         h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
             color: #cba6f7;
+            position: relative;
+            z-index: 2;
+            padding: 10px 20px;
+            background: rgba(30, 30, 46, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .rainbow-text {
+            background: linear-gradient(
+                90deg,
+                #ff0000,
+                #ff8000,
+                #ffff00,
+                #80ff00,
+                #00ff00,
+                #00ff80,
+                #00ffff,
+                #0080ff,
+                #0000ff,
+                #8000ff,
+                #ff00ff,
+                #ff0080
+            );
+            background-size: 1200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: rainbow 8s linear infinite;
+        }
+        
+        @keyframes rainbow {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+        
+        .title-toggle {
+            position: absolute;
+            top: 10px;
+            right: -60px;
+            background: #585b70;
+            color: #cdd6f4;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            z-index: 3;
+        }
+        
+        .title-toggle:hover {
+            background: #6c7086;
         }
         
         .tierlist-title {
@@ -317,12 +380,50 @@
             height: 100%;
             cursor: pointer;
         }
+        
+        .floating-hearts {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .heart {
+            position: absolute;
+            font-size: 20px;
+            opacity: 0;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Tierlist Creator</h1>
+            <div class="title-container">
+                <h1 id="main-title" class="rainbow-text">Riloox's Tierlist Maker</h1>
+                <button class="title-toggle" id="toggle-animation">Static</button>
+                <div class="floating-hearts" id="hearts-container"></div>
+            </div>
             <input type="text" class="tierlist-title" value="My Tierlist" placeholder="Enter tierlist title">
         </header>
         
@@ -381,6 +482,7 @@
         let items = [];
         let draggedItem = null;
         let dragOverElement = null;
+        let isRainbowEnabled = true;
         
         // DOM elements
         const tierlistContainer = document.getElementById('tierlist');
@@ -397,12 +499,49 @@
         const importFileInput = document.getElementById('import-file');
         const importTextArea = document.getElementById('import-text');
         const importFromTextBtn = document.getElementById('import-from-text');
+        const toggleAnimationBtn = document.getElementById('toggle-animation');
+        const mainTitle = document.getElementById('main-title');
+        const heartsContainer = document.getElementById('hearts-container');
         
         // Initialize the app
         function init() {
             renderTiers();
             renderItemPool();
             attachEventListeners();
+            createHearts();
+        }
+        
+        // Create floating hearts animation
+        function createHearts() {
+            const heartSymbols = ['❤️', '💖', '💕', '💗', '💓', '💞', '💝'];
+            const containerWidth = document.querySelector('.title-container').offsetWidth;
+            
+            for (let i = 0; i < 12; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+                heart.style.left = Math.random() * containerWidth + 'px';
+                heart.style.animationDelay = Math.random() * 6 + 's';
+                heart.style.fontSize = (15 + Math.random() * 15) + 'px';
+                heartsContainer.appendChild(heart);
+            }
+        }
+        
+        // Toggle rainbow animation
+        function toggleRainbowAnimation() {
+            isRainbowEnabled = !isRainbowEnabled;
+            
+            if (isRainbowEnabled) {
+                mainTitle.classList.add('rainbow-text');
+                mainTitle.style.color = 'transparent';
+                toggleAnimationBtn.textContent = 'Static';
+                heartsContainer.style.display = 'block';
+            } else {
+                mainTitle.classList.remove('rainbow-text');
+                mainTitle.style.color = '#cba6f7';
+                toggleAnimationBtn.textContent = 'Rainbow';
+                heartsContainer.style.display = 'none';
+            }
         }
         
         // Render all tiers
@@ -788,6 +927,9 @@
                     alert('Please paste JSON data in the text area.');
                 }
             });
+            
+            // Toggle animation button
+            toggleAnimationBtn.addEventListener('click', toggleRainbowAnimation);
         }
         
         // Initialize the app when the DOM is loaded
