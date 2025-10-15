@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riloox's Basic Tierlist Creator</title>
+    <style>
+        :root {
+            --s-tier: #ff7f7f;
+            --a-tier: #ffbf7f;
+            --b-tier: #ffdf7f;
+            --c-tier: #ffff7f;
+            --d-tier: #bfff7f;
+            --f-tier: #7fff7f;
+            --default-tier: #f0f0f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #cba6f7;
+        }
+        
+        .tierlist-title {
+            font-size: 1.8rem;
+            margin: 15px 0;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #cdd6f4;
+            text-align: center;
+            width: 100%;
+            border-bottom: 2px solid #585b70;
+            transition: border-color 0.3s;
+        }
+        
+        .tierlist-title:focus {
+            outline: none;
+            border-color: #cba6f7;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        button {
+            background-color: #585b70;
+            color: #cdd6f4;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #6c7086;
+        }
+        
+        .tierlist-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 30px;
+        }
+        
+        .tier-row {
+            display: flex;
+            margin-bottom: 5px;
+            min-height: 100px;
+        }
+        
+        .tier-label {
+            width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1e1e2e;
+            position: relative;
+        }
+        
+        .tier-label input {
+            background: transparent;
+            border: none;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            padding: 5px;
+        }
+        
+        .tier-content {
+            flex: 1;
+            background-color: rgba(88, 91, 112, 0.3);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 10px;
+            gap: 10px;
+            min-height: 100px;
+        }
+        
+        .item {
+            width: 80px;
+            height: 80px;
+            background-color: #313244;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+        
+        .item:hover {
+            transform: scale(1.05);
+        }
+        
+        .item img {
+            max-width: 100%;
+            max-height: 60px;
+            object-fit: contain;
+        }
+        
+        .item-text {
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 2px;
+            word-break: break-word;
+            max-height: 20px;
+            overflow: hidden;
+        }
+        
+        .item-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .item:hover .item-remove {
+            opacity: 1;
+        }
+        
+        .item-pool {
+            background-color: #313244;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .item-pool h3 {
+            margin-bottom: 10px;
+            color: #cba6f7;
+        }
+        
+        .item-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #45475a;
+            border-radius: 5px;
+        }
+        
+        .item-form input {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background-color: #585b70;
+            color: #cdd6f4;
+        }
+        
+        .item-form input::placeholder {
+            color: #a6adc8;
+        }
+        
+        .item-pool-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 100px;
+            padding: 10px;
+            background-color: rgba(88, 91, 112, 0.3);
+            border-radius: 5px;
+        }
+        
+        .tier-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .tier-color {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .dragging {
+            opacity: 0.5;
+        }
+        
+        .drop-zone {
+            border: 2px dashed #cba6f7;
+        }
+        
+        .drop-zone-hover {
+            background-color: rgba(203, 166, 247, 0.2);
+        }
+        
+        .export-import {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #313244;
+            border-radius: 10px;
+        }
+        
+        .export-import h3 {
+            margin-bottom: 10px;
+            color: #cba6f7;
+        }
+        
+        .export-import-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .import-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .import-area textarea {
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #585b70;
+            color: #cdd6f4;
+            border: none;
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Tierlist Creator</h1>
+            <input type="text" class="tierlist-title" value="My Tierlist" placeholder="Enter tierlist title">
+        </header>
+        
+        <div class="controls">
+            <button id="add-tier">Add Tier</button>
+            <button id="add-item">Add Item</button>
+            <button id="reset-all">Reset All</button>
+        </div>
+        
+        <div class="tierlist-container" id="tierlist">
+            <!-- Tiers will be dynamically added here -->
+        </div>
+        
+        <div class="item-pool">
+            <h3>Item Pool</h3>
+            <div class="item-form">
+                <input type="text" id="item-text" placeholder="Item text (optional)">
+                <input type="text" id="item-image" placeholder="Image URL (optional)">
+                <button id="create-item">Create Item</button>
+            </div>
+            <div class="item-pool-content" id="item-pool">
+                <!-- Items will be dynamically added here -->
+            </div>
+        </div>
+        
+        <div class="export-import">
+            <h3>Export & Import</h3>
+            <div class="export-import-buttons">
+                <button id="export-json">Export as JSON</button>
+                <button id="copy-json">Copy JSON to Clipboard</button>
+                <div class="file-input-wrapper">
+                    <button id="import-json">Import from File</button>
+                    <input type="file" id="import-file" accept=".json">
+                </div>
+            </div>
+            <div class="import-area">
+                <textarea id="import-text" placeholder="Paste JSON data here to import"></textarea>
+                <button id="import-from-text">Import from Text</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default tiers with colors
+        const defaultTiers = [
+            { label: 'S', color: '#ff7f7f' },
+            { label: 'A', color: '#ffbf7f' },
+            { label: 'B', color: '#ffdf7f' },
+            { label: 'C', color: '#ffff7f' },
+            { label: 'D', color: '#bfff7f' },
+            { label: 'F', color: '#7fff7f' }
+        ];
+        
+        // Initialize the tierlist with default tiers
+        let tiers = JSON.parse(JSON.stringify(defaultTiers));
+        let items = [];
+        let draggedItem = null;
+        let dragOverElement = null;
+        
+        // DOM elements
+        const tierlistContainer = document.getElementById('tierlist');
+        const itemPool = document.getElementById('item-pool');
+        const tierlistTitle = document.querySelector('.tierlist-title');
+        const addTierBtn = document.getElementById('add-tier');
+        const addItemBtn = document.getElementById('add-item');
+        const resetAllBtn = document.getElementById('reset-all');
+        const createItemBtn = document.getElementById('create-item');
+        const itemTextInput = document.getElementById('item-text');
+        const itemImageInput = document.getElementById('item-image');
+        const exportJsonBtn = document.getElementById('export-json');
+        const copyJsonBtn = document.getElementById('copy-json');
+        const importFileInput = document.getElementById('import-file');
+        const importTextArea = document.getElementById('import-text');
+        const importFromTextBtn = document.getElementById('import-from-text');
+        
+        // Initialize the app
+        function init() {
+            renderTiers();
+            renderItemPool();
+            attachEventListeners();
+        }
+        
+        // Render all tiers
+        function renderTiers() {
+            tierlistContainer.innerHTML = '';
+            
+            tiers.forEach((tier, index) => {
+                const tierRow = document.createElement('div');
+                tierRow.className = 'tier-row';
+                tierRow.setAttribute('data-tier-index', index);
+                
+                const tierLabel = document.createElement('div');
+                tierLabel.className = 'tier-label';
+                tierLabel.style.backgroundColor = tier.color;
+                
+                const tierInput = document.createElement('input');
+                tierInput.type = 'text';
+                tierInput.value = tier.label;
+                tierInput.addEventListener('change', (e) => {
+                    tiers[index].label = e.target.value;
+                });
+                
+                const tierRemoveBtn = document.createElement('button');
+                tierRemoveBtn.className = 'tier-remove';
+                tierRemoveBtn.innerHTML = '×';
+                tierRemoveBtn.addEventListener('click', () => {
+                    if (tiers.length > 1) {
+                        // Move all items from this tier to the item pool
+                        const tierItems = items.filter(item => item.tierIndex === index);
+                        tierItems.forEach(item => {
+                            item.tierIndex = -1;
+                        });
+                        tiers.splice(index, 1);
+                        renderTiers();
+                        renderItemPool();
+                    } else {
+                        alert('You must have at least one tier!');
+                    }
+                });
+                
+                const tierColorInput = document.createElement('input');
+                tierColorInput.type = 'color';
+                tierColorInput.className = 'tier-color';
+                tierColorInput.value = tier.color;
+                tierColorInput.addEventListener('change', (e) => {
+                    tiers[index].color = e.target.value;
+                    tierLabel.style.backgroundColor = e.target.value;
+                });
+                
+                tierLabel.appendChild(tierInput);
+                tierLabel.appendChild(tierRemoveBtn);
+                tierLabel.appendChild(tierColorInput);
+                
+                const tierContent = document.createElement('div');
+                tierContent.className = 'tier-content';
+                tierContent.setAttribute('data-tier-index', index);
+                
+                // Add items to this tier
+                const tierItems = items.filter(item => item.tierIndex === index);
+                tierItems.forEach(item => {
+                    const itemElement = createItemElement(item);
+                    tierContent.appendChild(itemElement);
+                });
+                
+                tierRow.appendChild(tierLabel);
+                tierRow.appendChild(tierContent);
+                tierlistContainer.appendChild(tierRow);
+            });
+            
+            // Add drag and drop event listeners to tier content areas
+            document.querySelectorAll('.tier-content').forEach(content => {
+                content.addEventListener('dragover', handleDragOver);
+                content.addEventListener('dragenter', handleDragEnter);
+                content.addEventListener('dragleave', handleDragLeave);
+                content.addEventListener('drop', handleDrop);
+            });
+        }
+        
+        // Render the item pool
+        function renderItemPool() {
+            itemPool.innerHTML = '';
+            
+            const poolItems = items.filter(item => item.tierIndex === -1);
+            poolItems.forEach(item => {
+                const itemElement = createItemElement(item);
+                itemPool.appendChild(itemElement);
+            });
+            
+            // Add drag and drop event listeners to item pool
+            itemPool.addEventListener('dragover', handleDragOver);
+            itemPool.addEventListener('dragenter', handleDragEnter);
+            itemPool.addEventListener('dragleave', handleDragLeave);
+            itemPool.addEventListener('drop', handleDrop);
+        }
+        
+        // Create an item element
+        function createItemElement(item) {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'item';
+            itemElement.setAttribute('draggable', 'true');
+            itemElement.setAttribute('data-item-id', item.id);
+            
+            if (item.imageUrl) {
+                const img = document.createElement('img');
+                img.src = item.imageUrl;
+                img.alt = item.text || 'Item image';
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    // Show text if image fails to load
+                    if (item.text) {
+                        const text = document.createElement('div');
+                        text.className = 'item-text';
+                        text.textContent = item.text;
+                        text.style.maxHeight = 'none';
+                        itemElement.appendChild(text);
+                    }
+                };
+                itemElement.appendChild(img);
+            }
+            
+            if (item.text) {
+                const text = document.createElement('div');
+                text.className = 'item-text';
+                text.textContent = item.text;
+                itemElement.appendChild(text);
+            }
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'item-remove';
+            removeBtn.innerHTML = '×';
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                items = items.filter(i => i.id !== item.id);
+                renderTiers();
+                renderItemPool();
+            });
+            
+            itemElement.appendChild(removeBtn);
+            
+            // Drag events
+            itemElement.addEventListener('dragstart', handleDragStart);
+            itemElement.addEventListener('dragend', handleDragEnd);
+            
+            return itemElement;
+        }
+        
+        // Drag and drop handlers
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.getAttribute('data-item-id'));
+            e.dataTransfer.effectAllowed = 'move';
+        }
+        
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedItem = null;
+            
+            // Remove drop zone styling
+            document.querySelectorAll('.drop-zone-hover').forEach(el => {
+                el.classList.remove('drop-zone-hover');
+            });
+        }
+        
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+        
+        function handleDragEnter(e) {
+            e.preventDefault();
+            this.classList.add('drop-zone-hover');
+            dragOverElement = this;
+        }
+        
+        function handleDragLeave(e) {
+            // Only remove styling if we're leaving the element for another one
+            if (!this.contains(e.relatedTarget)) {
+                this.classList.remove('drop-zone-hover');
+            }
+        }
+        
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drop-zone-hover');
+            
+            const itemId = e.dataTransfer.getData('text/plain');
+            let tierIndex;
+            
+            // Determine the target tier
+            if (this === itemPool) {
+                tierIndex = -1; // Item pool
+            } else {
+                tierIndex = parseInt(this.getAttribute('data-tier-index'));
+            }
+            
+            // Update the item's tier
+            const itemIndex = items.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                items[itemIndex].tierIndex = tierIndex;
+                
+                // If dropping on another item, reorder within the same tier
+                if (draggedItem && draggedItem.parentElement === this && tierIndex !== -1) {
+                    const targetItem = e.target.closest('.item');
+                    if (targetItem && targetItem !== draggedItem) {
+                        const targetItemId = targetItem.getAttribute('data-item-id');
+                        const targetIndex = items.findIndex(item => item.id === targetItemId);
+                        
+                        if (targetIndex !== -1 && items[targetIndex].tierIndex === tierIndex) {
+                            // Remove the dragged item from the array
+                            const draggedItemData = items.splice(itemIndex, 1)[0];
+                            
+                            // Find the new position for the dragged item
+                            const newIndex = items.findIndex(item => item.id === targetItemId);
+                            
+                            // Insert the dragged item before the target item
+                            items.splice(newIndex, 0, draggedItemData);
+                        }
+                    }
+                }
+                
+                renderTiers();
+                renderItemPool();
+            }
+        }
+        
+        // Export tierlist as JSON
+        function exportTierlist() {
+            const tierlistData = {
+                title: tierlistTitle.value,
+                tiers: tiers,
+                items: items
+            };
+            
+            const dataStr = JSON.stringify(tierlistData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${tierlistTitle.value || 'tierlist'}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Copy JSON to clipboard
+        function copyTierlistToClipboard() {
+            const tierlistData = {
+                title: tierlistTitle.value,
+                tiers: tiers,
+                items: items
+            };
+            
+            const dataStr = JSON.stringify(tierlistData, null, 2);
+            
+            navigator.clipboard.writeText(dataStr).then(() => {
+                alert('Tierlist JSON copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy to clipboard. Please try again.');
+            });
+        }
+        
+        // Import tierlist from JSON
+        function importTierlist(jsonData) {
+            try {
+                const data = JSON.parse(jsonData);
+                
+                if (data.title !== undefined) {
+                    tierlistTitle.value = data.title;
+                }
+                
+                if (Array.isArray(data.tiers)) {
+                    tiers = data.tiers;
+                }
+                
+                if (Array.isArray(data.items)) {
+                    items = data.items;
+                }
+                
+                renderTiers();
+                renderItemPool();
+                alert('Tierlist imported successfully!');
+            } catch (error) {
+                console.error('Error importing tierlist:', error);
+                alert('Error importing tierlist. Please check the JSON format.');
+            }
+        }
+        
+        // Attach event listeners to buttons
+        function attachEventListeners() {
+            // Add tier button
+            addTierBtn.addEventListener('click', () => {
+                const newTier = {
+                    label: 'New',
+                    color: '#f0f0f0'
+                };
+                tiers.push(newTier);
+                renderTiers();
+            });
+            
+            // Add item button - focuses on the item form
+            addItemBtn.addEventListener('click', () => {
+                itemTextInput.focus();
+            });
+            
+            // Create item button
+            createItemBtn.addEventListener('click', () => {
+                const text = itemTextInput.value.trim();
+                const imageUrl = itemImageInput.value.trim();
+                
+                if (!text && !imageUrl) {
+                    alert('Please provide either text or an image URL for the item.');
+                    return;
+                }
+                
+                const newItem = {
+                    id: 'item-' + Date.now(),
+                    text: text || '',
+                    imageUrl: imageUrl || '',
+                    tierIndex: -1 // -1 means in the item pool
+                };
+                
+                items.push(newItem);
+                renderItemPool();
+                
+                // Clear inputs
+                itemTextInput.value = '';
+                itemImageInput.value = '';
+            });
+            
+            // Reset all button
+            resetAllBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset everything? This will remove all items and reset tiers to default.')) {
+                    tiers = JSON.parse(JSON.stringify(defaultTiers));
+                    items = [];
+                    tierlistTitle.value = 'My Tierlist';
+                    renderTiers();
+                    renderItemPool();
+                }
+            });
+            
+            // Allow pressing Enter in the item form
+            itemTextInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    createItemBtn.click();
+                }
+            });
+            
+            itemImageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    createItemBtn.click();
+                }
+            });
+            
+            // Export buttons
+            exportJsonBtn.addEventListener('click', exportTierlist);
+            copyJsonBtn.addEventListener('click', copyTierlistToClipboard);
+            
+            // Import from file
+            importFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        importTierlist(event.target.result);
+                    };
+                    reader.readAsText(file);
+                }
+                // Reset the file input
+                e.target.value = '';
+            });
+            
+            // Import from text
+            importFromTextBtn.addEventListener('click', () => {
+                const jsonText = importTextArea.value.trim();
+                if (jsonText) {
+                    importTierlist(jsonText);
+                    importTextArea.value = '';
+                } else {
+                    alert('Please paste JSON data in the text area.');
+                }
+            });
+        }
+        
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
