@@ -327,6 +327,22 @@
             cursor: pointer;
             font-size: 18px;
         }
+
+        .tier-move-up,
+        .tier-move-down {
+            position: absolute;
+            left: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .tier-move-up {
+            top: 5px;
+        }
+
+        .tier-move-down {
+            bottom: 5px;
+        }
         
         .dragging {
             opacity: 0.5;
@@ -612,6 +628,33 @@
                 tierLabel.appendChild(tierRemoveBtn);
                 tierLabel.appendChild(tierColorInput);
                 tierLabel.appendChild(tierColorEmoji);
+
+                const tierMoveUp = document.createElement('div');
+                tierMoveUp.className = 'tier-move-up';
+                tierMoveUp.innerHTML = '▲';
+                tierMoveUp.addEventListener('click', () => {
+                    if (index > 0) {
+                        const temp = tiers[index];
+                        tiers[index] = tiers[index - 1];
+                        tiers[index - 1] = temp;
+                        renderTiers();
+                    }
+                });
+
+                const tierMoveDown = document.createElement('div');
+                tierMoveDown.className = 'tier-move-down';
+                tierMoveDown.innerHTML = '▼';
+                tierMoveDown.addEventListener('click', () => {
+                    if (index < tiers.length - 1) {
+                        const temp = tiers[index];
+                        tiers[index] = tiers[index + 1];
+                        tiers[index + 1] = temp;
+                        renderTiers();
+                    }
+                });
+
+                tierLabel.appendChild(tierMoveUp);
+                tierLabel.appendChild(tierMoveDown);
                 
                 const tierContent = document.createElement('div');
                 tierContent.className = 'tier-content';
