@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tierlist Creator</title>
+    <title>Riloox's Tierlist Maker</title>
     <style>
         :root {
             --s-tier: #ff7f7f;
@@ -429,7 +429,6 @@
         
         <div class="controls">
             <button id="add-tier">Add Tier</button>
-            <button id="add-item">Add Item</button>
             <button id="reset-all">Reset All</button>
         </div>
         
@@ -442,7 +441,9 @@
             <div class="item-form">
                 <input type="text" id="item-text" placeholder="Item text (optional)">
                 <input type="text" id="item-image" placeholder="Image URL (optional)">
+                <input type="file" id="item-image-file" accept="image/*" style="display: none;">
                 <button id="create-item">Create Item</button>
+                <button id="upload-image-btn">Upload Image</button>
             </div>
             <div class="item-pool-content" id="item-pool">
                 <!-- Items will be dynamically added here -->
@@ -489,11 +490,12 @@
         const itemPool = document.getElementById('item-pool');
         const tierlistTitle = document.querySelector('.tierlist-title');
         const addTierBtn = document.getElementById('add-tier');
-        const addItemBtn = document.getElementById('add-item');
         const resetAllBtn = document.getElementById('reset-all');
         const createItemBtn = document.getElementById('create-item');
         const itemTextInput = document.getElementById('item-text');
         const itemImageInput = document.getElementById('item-image');
+        const itemImageFileInput = document.getElementById('item-image-file');
+        const uploadImageBtn = document.getElementById('upload-image-btn');
         const exportJsonBtn = document.getElementById('export-json');
         const copyJsonBtn = document.getElementById('copy-json');
         const importFileInput = document.getElementById('import-file');
@@ -845,34 +847,42 @@
                 renderTiers();
             });
             
-            // Add item button - focuses on the item form
-            addItemBtn.addEventListener('click', () => {
-                itemTextInput.focus();
-            });
-            
             // Create item button
             createItemBtn.addEventListener('click', () => {
                 const text = itemTextInput.value.trim();
                 const imageUrl = itemImageInput.value.trim();
-                
-                if (!text && !imageUrl) {
-                    alert('Please provide either text or an image URL for the item.');
+                const imageFile = itemImageFileInput.files[0];
+
+                if (!text && !imageUrl && !imageFile) {
+                    alert('Please provide either text, an image URL, or upload an image for the item.');
                     return;
                 }
-                
-                const newItem = {
-                    id: 'item-' + Date.now(),
-                    text: text || '',
-                    imageUrl: imageUrl || '',
-                    tierIndex: -1 // -1 means in the item pool
-                };
-                
-                items.push(newItem);
-                renderItemPool();
-                
-                // Clear inputs
-                itemTextInput.value = '';
-                itemImageInput.value = '';
+
+                if (imageFile) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const newItem = {
+                            id: 'item-' + Date.now(),
+                            text: text || '',
+                            imageUrl: e.target.result,
+                            tierIndex: -1
+                        };
+                        items.push(newItem);
+                        renderItemPool();
+                        clearItemInputs();
+                    };
+                    reader.readAsDataURL(imageFile);
+                } else {
+                    const newItem = {
+                        id: 'item-' + Date.now(),
+                        text: text || '',
+                        imageUrl: imageUrl || '',
+                        tierIndex: -1
+                    };
+                    items.push(newItem);
+                    renderItemPool();
+                    clearItemInputs();
+                }
             });
             
             // Reset all button
@@ -892,6 +902,17 @@
                     createItemBtn.click();
                 }
             });
+
+            uploadImageBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                itemImageFileInput.click();
+            });
+
+            function clearItemInputs() {
+                itemTextInput.value = '';
+                itemImageInput.value = '';
+                itemImageFileInput.value = '';
+            }
             
             itemImageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
