@@ -311,12 +311,21 @@
         .tier-color {
             position: absolute;
             bottom: 5px;
-            right: 5px;
+            right: 30px;
             width: 20px;
             height: 20px;
             border: none;
             border-radius: 50%;
             cursor: pointer;
+            opacity: 0;
+        }
+        
+        .tier-color-emoji {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            cursor: pointer;
+            font-size: 18px;
         }
         
         .dragging {
@@ -591,10 +600,18 @@
                     tiers[index].color = e.target.value;
                     tierLabel.style.backgroundColor = e.target.value;
                 });
+
+                const tierColorEmoji = document.createElement('span');
+                tierColorEmoji.className = 'tier-color-emoji';
+                tierColorEmoji.innerHTML = '✏️';
+                tierColorEmoji.addEventListener('click', () => {
+                    tierColorInput.click();
+                });
                 
                 tierLabel.appendChild(tierInput);
                 tierLabel.appendChild(tierRemoveBtn);
                 tierLabel.appendChild(tierColorInput);
+                tierLabel.appendChild(tierColorEmoji);
                 
                 const tierContent = document.createElement('div');
                 tierContent.className = 'tier-content';
