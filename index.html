@@ -856,17 +856,16 @@
                     const targetItem = e.target.closest('.item');
                     if (targetItem && targetItem !== draggedItem) {
                         const targetItemId = targetItem.getAttribute('data-item-id');
-                        const targetIndex = items.findIndex(item => item.id === targetItemId);
+                        const targetIndexInItems = items.findIndex(item => item.id === targetItemId);
                         
-                        if (targetIndex !== -1 && items[targetIndex].tierIndex === tierIndex) {
-                            
+                        if (targetIndexInItems !== -1 && items[targetIndexInItems].tierIndex === tierIndex) {
                             const draggedItemData = items.splice(itemIndex, 1)[0];
-                            
-                            
-                            const newIndex = items.findIndex(item => item.id === targetItemId);
-                            
-                            
-                            items.splice(newIndex, 0, draggedItemData);
+                            const newTargetIndex = items.findIndex(item => item.id === targetItemId);
+
+                            const rect = targetItem.getBoundingClientRect();
+                            const isAfter = e.clientX > rect.left + rect.width / 2;
+
+                            items.splice(newTargetIndex + (isAfter ? 1 : 0), 0, draggedItemData);
                         }
                     }
                 }
