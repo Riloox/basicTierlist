@@ -482,7 +482,7 @@
         </div>
         
         <div class="tierlist-container" id="tierlist">
-            <!-- Tiers will be dynamically added here -->
+            
         </div>
         
         <div class="item-pool">
@@ -495,7 +495,7 @@
                 <button id="upload-image-btn">Upload Image</button>
             </div>
             <div class="item-pool-content" id="item-pool">
-                <!-- Items will be dynamically added here -->
+                
             </div>
         </div>
         
@@ -517,7 +517,7 @@
     </div>
 
     <script>
-        // Default tiers with colors
+        
         const defaultTiers = [
             { label: 'S', color: '#ff7f7f' },
             { label: 'A', color: '#ffbf7f' },
@@ -527,14 +527,14 @@
             { label: 'F', color: '#7fff7f' }
         ];
         
-        // Initialize the tierlist with default tiers
+        
         let tiers = JSON.parse(JSON.stringify(defaultTiers));
         let items = [];
         let draggedItem = null;
         let dragOverElement = null;
         let isRainbowEnabled = true;
         
-        // DOM elements
+        
         const tierlistContainer = document.getElementById('tierlist');
         const itemPool = document.getElementById('item-pool');
         const tierlistTitle = document.querySelector('.tierlist-title');
@@ -554,7 +554,7 @@
         const mainTitle = document.getElementById('main-title');
         const heartsContainer = document.getElementById('hearts-container');
         
-        // Initialize the app
+        
         function init() {
             renderTiers();
             renderItemPool();
@@ -562,7 +562,7 @@
             createHearts();
         }
         
-        // Create floating hearts animation
+        
         function createHearts() {
             const heartSymbols = ['❤️', '💖', '💕', '💗', '💓', '💞', '💝'];
             const containerWidth = document.querySelector('.title-container').offsetWidth;
@@ -578,7 +578,7 @@
             }
         }
         
-        // Toggle rainbow animation
+        
         function toggleRainbowAnimation() {
             isRainbowEnabled = !isRainbowEnabled;
             
@@ -595,7 +595,7 @@
             }
         }
         
-        // Render all tiers
+        
         function renderTiers() {
             tierlistContainer.innerHTML = '';
             
@@ -620,7 +620,7 @@
                 tierRemoveBtn.innerHTML = '×';
                 tierRemoveBtn.addEventListener('click', () => {
                     if (tiers.length > 1) {
-                        // Move all items from this tier to the item pool
+                        
                         const tierItems = items.filter(item => item.tierIndex === index);
                         tierItems.forEach(item => {
                             item.tierIndex = -1;
@@ -659,9 +659,20 @@
                 tierMoveUp.innerHTML = '▲';
                 tierMoveUp.addEventListener('click', () => {
                     if (index > 0) {
+                        
                         const temp = tiers[index];
                         tiers[index] = tiers[index - 1];
                         tiers[index - 1] = temp;
+
+                        
+                        items.forEach(item => {
+                            if (item.tierIndex === index) {
+                                item.tierIndex = index - 1;
+                            } else if (item.tierIndex === index - 1) {
+                                item.tierIndex = index;
+                            }
+                        });
+
                         renderTiers();
                     }
                 });
@@ -671,9 +682,20 @@
                 tierMoveDown.innerHTML = '▼';
                 tierMoveDown.addEventListener('click', () => {
                     if (index < tiers.length - 1) {
+                        
                         const temp = tiers[index];
                         tiers[index] = tiers[index + 1];
                         tiers[index + 1] = temp;
+
+                        
+                        items.forEach(item => {
+                            if (item.tierIndex === index) {
+                                item.tierIndex = index + 1;
+                            } else if (item.tierIndex === index + 1) {
+                                item.tierIndex = index;
+                            }
+                        });
+
                         renderTiers();
                     }
                 });
@@ -685,7 +707,7 @@
                 tierContent.className = 'tier-content';
                 tierContent.setAttribute('data-tier-index', index);
                 
-                // Add items to this tier
+                
                 const tierItems = items.filter(item => item.tierIndex === index);
                 tierItems.forEach(item => {
                     const itemElement = createItemElement(item);
@@ -697,7 +719,7 @@
                 tierlistContainer.appendChild(tierRow);
             });
             
-            // Add drag and drop event listeners to tier content areas
+            
             document.querySelectorAll('.tier-content').forEach(content => {
                 content.addEventListener('dragover', handleDragOver);
                 content.addEventListener('dragenter', handleDragEnter);
@@ -706,7 +728,7 @@
             });
         }
         
-        // Render the item pool
+        
         function renderItemPool() {
             itemPool.innerHTML = '';
             
@@ -716,14 +738,14 @@
                 itemPool.appendChild(itemElement);
             });
             
-            // Add drag and drop event listeners to item pool
+            
             itemPool.addEventListener('dragover', handleDragOver);
             itemPool.addEventListener('dragenter', handleDragEnter);
             itemPool.addEventListener('dragleave', handleDragLeave);
             itemPool.addEventListener('drop', handleDrop);
         }
         
-        // Create an item element
+        
         function createItemElement(item) {
             const itemElement = document.createElement('div');
             itemElement.className = 'item';
@@ -736,7 +758,7 @@
                 img.alt = item.text || 'Item image';
                 img.onerror = function() {
                     this.style.display = 'none';
-                    // Show text if image fails to load
+                    
                     if (item.text) {
                         const text = document.createElement('div');
                         text.className = 'item-text';
@@ -767,14 +789,14 @@
             
             itemElement.appendChild(removeBtn);
             
-            // Drag events
+            
             itemElement.addEventListener('dragstart', handleDragStart);
             itemElement.addEventListener('dragend', handleDragEnd);
             
             return itemElement;
         }
         
-        // Drag and drop handlers
+        
         function handleDragStart(e) {
             draggedItem = this;
             this.classList.add('dragging');
@@ -786,7 +808,7 @@
             this.classList.remove('dragging');
             draggedItem = null;
             
-            // Remove drop zone styling
+            
             document.querySelectorAll('.drop-zone-hover').forEach(el => {
                 el.classList.remove('drop-zone-hover');
             });
@@ -804,7 +826,7 @@
         }
         
         function handleDragLeave(e) {
-            // Only remove styling if we're leaving the element for another one
+            
             if (!this.contains(e.relatedTarget)) {
                 this.classList.remove('drop-zone-hover');
             }
@@ -817,19 +839,19 @@
             const itemId = e.dataTransfer.getData('text/plain');
             let tierIndex;
             
-            // Determine the target tier
+            
             if (this === itemPool) {
-                tierIndex = -1; // Item pool
+                tierIndex = -1; 
             } else {
                 tierIndex = parseInt(this.getAttribute('data-tier-index'));
             }
             
-            // Update the item's tier
+            
             const itemIndex = items.findIndex(item => item.id === itemId);
             if (itemIndex !== -1) {
                 items[itemIndex].tierIndex = tierIndex;
                 
-                // If dropping on another item, reorder within the same tier
+                
                 if (draggedItem && draggedItem.parentElement === this && tierIndex !== -1) {
                     const targetItem = e.target.closest('.item');
                     if (targetItem && targetItem !== draggedItem) {
@@ -837,13 +859,13 @@
                         const targetIndex = items.findIndex(item => item.id === targetItemId);
                         
                         if (targetIndex !== -1 && items[targetIndex].tierIndex === tierIndex) {
-                            // Remove the dragged item from the array
+                            
                             const draggedItemData = items.splice(itemIndex, 1)[0];
                             
-                            // Find the new position for the dragged item
+                            
                             const newIndex = items.findIndex(item => item.id === targetItemId);
                             
-                            // Insert the dragged item before the target item
+                            
                             items.splice(newIndex, 0, draggedItemData);
                         }
                     }
@@ -854,7 +876,7 @@
             }
         }
         
-        // Show a temporary message
+        
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
             toast.className = `toast ${isError ? 'error' : ''}`;
@@ -874,7 +896,7 @@
             }, 3000);
         }
 
-        // Export tierlist as JSON
+        
         function exportTierlist() {
             const tierlistData = {
                 title: tierlistTitle.value,
@@ -895,7 +917,7 @@
             URL.revokeObjectURL(url);
         }
         
-        // Copy JSON to clipboard
+        
         function copyTierlistToClipboard() {
             const tierlistData = {
                 title: tierlistTitle.value,
@@ -913,7 +935,7 @@
             });
         }
         
-        // Import tierlist from JSON
+        
         function importTierlist(jsonData) {
             try {
                 const data = JSON.parse(jsonData);
@@ -939,9 +961,9 @@
             }
         }
         
-        // Attach event listeners to buttons
+        
         function attachEventListeners() {
-            // Add tier button
+            
             addTierBtn.addEventListener('click', () => {
                 const newTier = {
                     label: 'New',
@@ -951,7 +973,7 @@
                 renderTiers();
             });
             
-            // Create item button
+            
             createItemBtn.addEventListener('click', () => {
                 const text = itemTextInput.value.trim();
                 const imageUrl = itemImageInput.value.trim();
@@ -994,7 +1016,7 @@
                 }
             });
             
-            // Reset all button
+            
             resetAllBtn.addEventListener('click', () => {
                 if (confirm('Are you sure you want to reset everything? This will remove all items and reset tiers to default.')) {
                     tiers = JSON.parse(JSON.stringify(defaultTiers));
@@ -1005,7 +1027,7 @@
                 }
             });
             
-            // Allow pressing Enter in the item form
+            
             itemTextInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     createItemBtn.click();
@@ -1029,11 +1051,11 @@
                 }
             });
             
-            // Export buttons
+            
             exportJsonBtn.addEventListener('click', exportTierlist);
             copyJsonBtn.addEventListener('click', copyTierlistToClipboard);
             
-            // Import from file
+            
             importFileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -1043,11 +1065,11 @@
                     };
                     reader.readAsText(file);
                 }
-                // Reset the file input
+                
                 e.target.value = '';
             });
             
-            // Import from text
+            
             importFromTextBtn.addEventListener('click', () => {
                 const jsonText = importTextArea.value.trim();
                 if (jsonText) {
@@ -1058,11 +1080,11 @@
                 }
             });
             
-            // Toggle animation button
+            
             toggleAnimationBtn.addEventListener('click', toggleRainbowAnimation);
         }
         
-        // Initialize the app when the DOM is loaded
+        
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
