@@ -343,6 +343,11 @@
         .drop-zone-hover {
             background-color: rgba(203, 166, 247, 0.2);
         }
+
+        .drop-indicator {
+            border-left: 2px solid #f5c2e7;
+            margin-left: -2px;
+        }
         
         .export-import {
             margin-top: 20px;
@@ -700,6 +705,7 @@
         
         let tiers = JSON.parse(JSON.stringify(defaultTiers));
         let items = [];
+        let tierlistItems = [];
         let quadrantLabels = [];
         let draggedItem = null;
         let dragOverElement = null;
@@ -978,7 +984,7 @@
                 tierContent.setAttribute('data-tier-index', index);
                 
                 
-                const tierItems = items.filter(item => item.tierIndex === index);
+                const tierItems = items.filter(item => item.tierIndex === index).sort((a, b) => a.order - b.order);
                 tierItems.forEach(item => {
                     const itemElement = createItemElement(item);
                     tierContent.appendChild(itemElement);
@@ -1088,6 +1094,20 @@
         function handleDragOver(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
+
+            const target = e.target.closest('.item');
+            if (target && target !== draggedItem) {
+                const rect = target.getBoundingClientRect();
+                const isRightHalf = e.clientX > rect.left + rect.width / 2;
+                
+                document.querySelectorAll('.drop-indicator').forEach(el => el.classList.remove('drop-indicator'));
+                
+                if (isRightHalf) {
+                    target.nextSibling ? target.nextSibling.classList.add('drop-indicator') : target.classList.add('drop-indicator');
+                } else {
+                    target.classList.add('drop-indicator');
+                }
+            }
         }
         
         function handleDragEnter(e) {
@@ -1102,32 +1122,61 @@
             if (!this.contains(e.relatedTarget)) {
                 this.classList.remove('drop-zone-hover');
             }
+            document.querySelectorAll('.drop-indicator').forEach(el => el.classList.remove('drop-indicator'));
         }
         
         function handleDrop(e) {
             e.preventDefault();
             e.currentTarget.classList.remove('drop-zone-hover');
+            document.querySelectorAll('.drop-indicator').forEach(el => el.classList.remove('drop-indicator'));
             
             const itemId = e.dataTransfer.getData('text/plain');
-            const item = items.find(i => i.id === itemId);
-            if (!item) return;
+            const draggedItemObject = items.find(i => i.id === itemId);
+            if (!draggedItemObject) return;
 
             const target = e.currentTarget;
+            const dropTargetItemElement = e.target.closest('.item');
 
-            if (target.classList.contains('graph-view-container')) {
+            if (dropTargetItemElement && dropTargetItemElement !== draggedItem) {
+                const dropTargetItemId = dropTargetItemElement.getAttribute('data-item-id');
+                const dropTargetItemObject = items.find(i => i.id === dropTargetItemId);
+
+                if (dropTargetItemObject && draggedItemObject.tierIndex === dropTargetItemObject.tierIndex) {
+                    const tierContent = dropTargetItemElement.parentElement;
+                    const rect = dropTargetItemElement.getBoundingClientRect();
+                    const isRightHalf = e.clientX > rect.left + rect.width / 2;
+
+                    if (isRightHalf) {
+                        tierContent.insertBefore(draggedItem, dropTargetItemElement.nextSibling);
+                    } else {
+                        tierContent.insertBefore(draggedItem, dropTargetItemElement);
+                    }
+
+                    const tierIndex = draggedItemObject.tierIndex;
+                    const tierItems = Array.from(tierContent.children).map(el => el.getAttribute('data-item-id'));
+                    tierItems.forEach((itemId, i) => {
+                        const item = items.find(it => it.id === itemId);
+                        if (item) {
+                            item.order = i;
+                        }
+                    });
+                }
+            } else if (target.classList.contains('graph-view-container')) {
                 const rect = graphViewContainer.getBoundingClientRect();
-                item.x = e.clientX - rect.left;
-                item.y = e.clientY - rect.top;
-                item.tierIndex = -1;
+                draggedItemObject.x = e.clientX - rect.left;
+                draggedItemObject.y = e.clientY - rect.top;
+                draggedItemObject.tierIndex = -1;
             } else if (target.id === 'item-pool') {
-                item.tierIndex = -1;
-                item.x = null;
-                item.y = null;
+                draggedItemObject.tierIndex = -1;
+                draggedItemObject.x = null;
+                draggedItemObject.y = null;
             } else if (target.classList.contains('tier-content')) {
                 const tierIndex = parseInt(target.getAttribute('data-tier-index'));
-                item.tierIndex = tierIndex;
-                item.x = null;
-                item.y = null;
+                draggedItemObject.tierIndex = tierIndex;
+                draggedItemObject.x = null;
+                draggedItemObject.y = null;
+                const tierItems = items.filter(i => i.tierIndex === tierIndex);
+                draggedItemObject.order = tierItems.length;
             }
             
             renderTiers();
@@ -1240,10 +1289,11 @@
                 }
                 
                 if (Array.isArray(data.items)) {
-                    items = data.items.map(item => ({
+                    items = data.items.map((item, index) => ({
                         ...item,
                         x: item.x,
-                        y: item.y
+                        y: item.y,
+                        order: item.order || index
                     }));
                 }
 
@@ -1296,7 +1346,8 @@
                             imageUrl: e.target.result,
                             tierIndex: -1,
                             x: null,
-                            y: null
+                            y: null,
+                            order: items.filter(i => i.tierIndex === -1).length
                         };
                         items.push(newItem);
                         renderItemPool();
@@ -1314,7 +1365,8 @@
                         imageUrl: imageUrl || '',
                         tierIndex: -1,
                         x: null,
-                        y: null
+                        y: null,
+                        order: items.filter(i => i.tierIndex === -1).length
                     };
                     items.push(newItem);
                     renderItemPool();
@@ -1405,15 +1457,26 @@
             const tierlistElements = [tierlistContainer, document.querySelector('.controls'), tierlistTitle];
             
             if (isGraphView) {
+                tierlistItems = JSON.parse(JSON.stringify(items));
+                items.forEach(item => {
+                    if (item.tierIndex !== -1 && item.x === null && item.y === null) {
+                        item.x = Math.random() * (graphViewContainer.offsetWidth - 80) + 40;
+                        item.y = Math.random() * (graphViewContainer.offsetHeight - 80) + 40;
+                    }
+                });
+                renderGraphView();
                 tierlistElements.forEach(el => el.classList.add('hidden'));
                 graphModeWrapper.classList.remove('hidden');
                 backToTierlistBtn.classList.remove('hidden');
-                document.querySelector('.export-import').classList.remove('hidden');
+                document.querySelector('.item-pool').classList.add('hidden');
             } else {
+                items = JSON.parse(JSON.stringify(tierlistItems));
+                renderTiers();
+                renderItemPool();
                 tierlistElements.forEach(el => el.classList.remove('hidden'));
                 graphModeWrapper.classList.add('hidden');
                 backToTierlistBtn.classList.add('hidden');
-                document.querySelector('.export-import').classList.remove('hidden');
+                document.querySelector('.item-pool').classList.remove('hidden');
             }
         }
         
