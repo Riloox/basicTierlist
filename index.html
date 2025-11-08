@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riloox's Tierlist Maker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --s-tier: #ff7f7f;
@@ -27,6 +28,10 @@
             color: #cdd6f4;
             padding: 20px;
             line-height: 1.6;
+        }
+
+        .hidden {
+            display: none !important;
         }
         
         .container {
@@ -88,24 +93,6 @@
             100% {
                 background-position: 100% 50%;
             }
-        }
-        
-        .title-toggle {
-            position: absolute;
-            top: 10px;
-            right: -60px;
-            background: #585b70;
-            color: #cdd6f4;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            z-index: 3;
-        }
-        
-        .title-toggle:hover {
-            background: #6c7086;
         }
         
         .tierlist-title {
@@ -203,6 +190,7 @@
             overflow: hidden;
             cursor: grab;
             transition: transform 0.2s;
+            z-index: 10; /* Ensure items are above quadrant backgrounds */
         }
         
         .item:hover {
@@ -370,6 +358,7 @@
         
         .export-import-buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 15px;
         }
@@ -464,35 +453,132 @@
             background-color: #f38ba8;
             color: #1e1e2e;
         }
+
+        #graph-mode-wrapper {
+            margin: 0 auto;
+            max-width: 800px;
+        }
+
+        .graph-labels-top, .graph-labels-bottom {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        .graph-labels-top {
+            margin-bottom: 10px;
+        }
+        .graph-labels-bottom {
+            margin-top: 10px;
+        }
+
+        .graph-view-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .quadrant-bg {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            z-index: 1;
+            transition: background-color 0.3s;
+        }
+        #bg-top-left { top: 0; left: 0; }
+        #bg-top-right { top: 0; right: 0; }
+        #bg-bottom-left { bottom: 0; left: 0; }
+        #bg-bottom-right { bottom: 0; right: 0; }
+
+        .graph-axis-x, .graph-axis-y {
+            position: absolute;
+            background-color: #9399b2;
+            z-index: 2;
+        }
+        .graph-axis-x { left: 0; top: 50%; width: 100%; height: 2px; transform: translateY(-1px); }
+        .graph-axis-y { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-1px); }
+
+        .quadrant-label-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        #label-container-top-right, #label-container-bottom-right {
+            flex-direction: row-reverse;
+        }
+
+        .quadrant-label {
+            background: transparent;
+            border: none;
+            color: #cdd6f4;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 5px;
+            text-align: center;
+            width: 150px;
+        }
+        .quadrant-label:focus {
+            outline: 1px dashed #cba6f7;
+        }
+
+        .quadrant-color-emoji {
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .quadrant-color-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            padding: 0;
+            border: none;
+        }
+
+        #back-to-tierlist-btn {
+            margin-top: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-                            <div class="title-container">
-                                <h1 id="main-title" class="rainbow-text">Riloox's Tierlist Maker</h1>
-                                <button class="title-toggle" id="toggle-animation">Animation</button>
-                                <div class="floating-hearts" id="hearts-container"></div>
-                            </div>            <input type="text" class="tierlist-title" value="My Tierlist" placeholder="Enter tierlist title">
+            <div class="title-container">
+                <h1 id="main-title">Riloox's Tierlist Maker</h1>
+                
+                <div class="floating-hearts" id="hearts-container"></div>
+            </div>
+            <input type="text" class="tierlist-title" value="My Tierlist" placeholder="Enter tierlist title">
+            <button id="back-to-tierlist-btn" class="hidden">Back to Tierlist</button>
         </header>
         
         <div class="controls">
             <button id="add-tier">Add Tier</button>
             <button id="reset-all">Reset All</button>
+            <button id="toggle-view">Graph View</button>
+            <button id="lang-switch">Español</button>
         </div>
         
         <div class="tierlist-container" id="tierlist">
             
         </div>
+
+        <div id="graph-mode-wrapper" class="hidden">
+            <div class="graph-labels-top"></div>
+            <div class="graph-view-container" id="graph-view"></div>
+            <div class="graph-labels-bottom"></div>
+        </div>
         
         <div class="item-pool">
-            <h3>Item Pool</h3>
+            <h3 data-i18n="itemPoolTitle">Item Pool</h3>
             <div class="item-form">
                 <input type="text" id="item-text" placeholder="Item text (optional)">
                 <input type="text" id="item-image" placeholder="Image URL (optional)">
                 <input type="file" id="item-image-file" accept="image/*" style="display: none;">
-                <button id="create-item">Create Item</button>
-                <button id="upload-image-btn">Upload Image</button>
+                <button id="create-item" data-i18n="createItem">Create Item</button>
+                <button id="upload-image-btn" data-i18n="uploadImage">Upload Image</button>
             </div>
             <div class="item-pool-content" id="item-pool">
                 
@@ -500,23 +586,106 @@
         </div>
         
         <div class="export-import">
-            <h3>Export & Import</h3>
+            <h3 data-i18n="exportImportTitle">Export & Import</h3>
             <div class="export-import-buttons">
-                <button id="export-json">Export as JSON</button>
-                <button id="copy-json">Copy JSON to Clipboard</button>
+                <button id="export-png" data-i18n="exportPng">Export as PNG</button>
+                <button id="export-json" data-i18n="exportJson">Export as JSON</button>
+                <button id="copy-json" data-i18n="copyJson">Copy JSON to Clipboard</button>
                 <div class="file-input-wrapper">
-                    <button id="import-json">Import from File</button>
+                    <button id="import-json" data-i18n="importFile">Import from File</button>
                     <input type="file" id="import-file" accept=".json">
                 </div>
             </div>
             <div class="import-area">
                 <textarea id="import-text" placeholder="Paste JSON data here to import"></textarea>
-                <button id="import-from-text">Import from Text</button>
+                <button id="import-from-text" data-i18n="importText">Import from Text</button>
             </div>
         </div>
     </div>
 
     <script>
+        const translations = {
+            en: {
+                appTitle: "Riloox's Tierlist Maker",
+                tierlistTitlePlaceholder: "Enter tierlist title",
+                myTierlist: "My Tierlist",
+                backToTierlist: "Back to Tierlist",
+                addTier: "Add Tier",
+                resetAll: "Reset All",
+                graphView: "Graph View",
+                langSwitch: "Español",
+                itemPoolTitle: "Item Pool",
+                itemTextPlaceholder: "Item text (optional)",
+                imageUrlPlaceholder: "Image URL (optional)",
+                createItem: "Create Item",
+                uploadImage: "Upload Image",
+                exportImportTitle: "Export & Import",
+                exportPng: "Export as PNG",
+                exportJson: "Export as JSON",
+                copyJson: "Copy JSON to Clipboard",
+                importFile: "Import from File",
+                importText: "Import from Text",
+                pasteJsonPlaceholder: "Paste JSON data here to import",
+                quadrantTopLeft: "Top Left",
+                quadrantTopRight: "Top Right",
+                quadrantBottomLeft: "Bottom Left",
+                quadrantBottomRight: "Bottom Right",
+                resetConfirm: "Are you sure you want to reset everything? This will remove all items and reset tiers to default.",
+                toastCopied: "Tierlist JSON copied to clipboard!",
+                toastCopyFailed: "Failed to copy to clipboard. Please try again.",
+                toastImportSuccess: "Tierlist imported successfully!",
+                toastImportError: "Error importing tierlist. Please check the JSON format.",
+                toastItemCreateSuccess: "Item created successfully!",
+                toastItemCreateError: "Please provide either text, an image URL, or upload an image for the item.",
+                toastImageUploadSuccess: "Image uploaded successfully!",
+                toastImageUploadError: "Error reading the uploaded file.",
+                toastOneTierError: "You must have at least one tier!",
+                toastPngError: "Could not export as PNG. See console for details."
+            },
+            es: {
+                appTitle: "Creador de Tierlists de Riloox",
+                tierlistTitlePlaceholder: "Introduce el título de la tierlist",
+                myTierlist: "Mi Tierlist",
+                backToTierlist: "Volver a la Tierlist",
+                addTier: "Añadir Fila",
+                resetAll: "Reiniciar Todo",
+                graphView: "Vista de Gráfico",
+                langSwitch: "English",
+                itemPoolTitle: "Banco de Ítems",
+                itemTextPlaceholder: "Texto del ítem (opcional)",
+                imageUrlPlaceholder: "URL de la imagen (opcional)",
+                createItem: "Crear Ítem",
+                uploadImage: "Subir Imagen",
+                exportImportTitle: "Exportar & Importar",
+                exportPng: "Exportar como PNG",
+                exportJson: "Exportar como JSON",
+                copyJson: "Copiar JSON al Portapapeles",
+                importFile: "Importar desde Archivo",
+                importText: "Importar desde Texto",
+                pasteJsonPlaceholder: "Pega los datos JSON aquí para importar",
+                quadrantTopLeft: "Arriba Izquierda",
+                quadrantTopRight: "Arriba Derecha",
+                quadrantBottomLeft: "Abajo Izquierda",
+                quadrantBottomRight: "Abajo Derecha",
+                resetConfirm: "¿Estás seguro de que quieres reiniciarlo todo? Esto eliminará todos los ítems y restaurará las filas a sus valores predeterminados.",
+                toastCopied: "¡JSON de la tierlist copiado al portapapeles!",
+                toastCopyFailed: "Error al copiar al portapapeles. Por favor, inténtalo de nuevo.",
+                toastImportSuccess: "¡Tierlist importada con éxito!",
+                toastImportError: "Error al importar la tierlist. Por favor, comprueba el formato del JSON.",
+                toastItemCreateSuccess: "¡Ítem creado con éxito!",
+                toastItemCreateError: "Por favor, proporciona un texto, una URL de imagen o sube una imagen para el ítem.",
+                toastImageUploadSuccess: "¡Imagen subida con éxito!",
+                toastImageUploadError: "Error al leer el archivo subido.",
+                toastOneTierError: "¡Debes tener al menos una fila!",
+                toastPngError: "No se pudo exportar como PNG. Revisa la consola para más detalles."
+            }
+        };
+
+        let currentLanguage = 'en';
+
+        function t(key) {
+            return translations[currentLanguage][key] || key;
+        }
         
         const defaultTiers = [
             { label: 'S', color: '#ff7f7f' },
@@ -526,14 +695,14 @@
             { label: 'D', color: '#bfff7f' },
             { label: 'F', color: '#7fff7f' }
         ];
-        
+
+        let defaultQuadrantLabels = [];
         
         let tiers = JSON.parse(JSON.stringify(defaultTiers));
         let items = [];
+        let quadrantLabels = [];
         let draggedItem = null;
         let dragOverElement = null;
-        let isRainbowEnabled = true;
-        
         
         const tierlistContainer = document.getElementById('tierlist');
         const itemPool = document.getElementById('item-pool');
@@ -545,28 +714,146 @@
         const itemImageInput = document.getElementById('item-image');
         const itemImageFileInput = document.getElementById('item-image-file');
         const uploadImageBtn = document.getElementById('upload-image-btn');
+        const exportPngBtn = document.getElementById('export-png');
         const exportJsonBtn = document.getElementById('export-json');
         const copyJsonBtn = document.getElementById('copy-json');
         const importFileInput = document.getElementById('import-file');
+        const importJsonBtn = document.getElementById('import-json');
         const importTextArea = document.getElementById('import-text');
         const importFromTextBtn = document.getElementById('import-from-text');
-        const toggleAnimationBtn = document.getElementById('toggle-animation');
         const mainTitle = document.getElementById('main-title');
         const heartsContainer = document.getElementById('hearts-container');
+        const toggleViewBtn = document.getElementById('toggle-view');
+        const langSwitchBtn = document.getElementById('lang-switch');
         
+        const graphModeWrapper = document.getElementById('graph-mode-wrapper');
+        const graphViewContainer = document.getElementById('graph-view');
+        const backToTierlistBtn = document.getElementById('back-to-tierlist-btn');
+
+        let isGraphView = false;
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            mainTitle.textContent = t('appTitle');
+            mainTitle.classList.add('rainbow-text');
+            tierlistTitle.placeholder = t('tierlistTitlePlaceholder');
+            backToTierlistBtn.textContent = t('backToTierlist');
+            addTierBtn.textContent = t('addTier');
+            resetAllBtn.textContent = t('resetAll');
+            toggleViewBtn.textContent = t('graphView');
+            langSwitchBtn.textContent = t('langSwitch');
+            itemTextInput.placeholder = t('itemTextPlaceholder');
+            itemImageInput.placeholder = t('imageUrlPlaceholder');
+            importTextArea.placeholder = t('pasteJsonPlaceholder');
+
+            defaultQuadrantLabels = [
+                { id: 'top-left', label: t('quadrantTopLeft'), color: '#313244' },
+                { id: 'top-right', label: t('quadrantTopRight'), color: '#45475a' },
+                { id: 'bottom-left', label: t('quadrantBottomLeft'), color: '#45475a' },
+                { id: 'bottom-right', label: t('quadrantBottomRight'), color: '#313244' }
+            ];
+
+            if (quadrantLabels.length === 0) {
+                quadrantLabels = JSON.parse(JSON.stringify(defaultQuadrantLabels));
+            }
+
+            renderTiers();
+            renderGraphView();
+        }
         
         function init() {
-            renderTiers();
+            applyTranslations();
             renderItemPool();
             attachEventListeners();
             createHearts();
         }
+
+        function renderGraphView() {
+            const topLabelsContainer = graphModeWrapper.querySelector('.graph-labels-top');
+            const bottomLabelsContainer = graphModeWrapper.querySelector('.graph-labels-bottom');
+            
+            graphViewContainer.innerHTML = '';
+            topLabelsContainer.innerHTML = '';
+            bottomLabelsContainer.innerHTML = '';
+
+            const axisX = document.createElement('div');
+            axisX.className = 'graph-axis-x';
+            graphViewContainer.appendChild(axisX);
+
+            const axisY = document.createElement('div');
+            axisY.className = 'graph-axis-y';
+            graphViewContainer.appendChild(axisY);
+
+            quadrantLabels.forEach(q => {
+                const quadrantBg = document.createElement('div');
+                quadrantBg.className = 'quadrant-bg';
+                quadrantBg.id = `bg-${q.id}`;
+                quadrantBg.style.backgroundColor = q.color;
+                graphViewContainer.appendChild(quadrantBg);
+
+                const labelContainer = document.createElement('div');
+                labelContainer.className = 'quadrant-label-container';
+                labelContainer.id = `label-container-${q.id}`;
+
+                const labelEl = document.createElement('input');
+                labelEl.type = 'text';
+                labelEl.className = 'quadrant-label';
+                labelEl.value = q.label;
+                labelEl.addEventListener('change', (e) => {
+                    q.label = e.target.value;
+                });
+
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color';
+                colorInput.className = 'quadrant-color-input';
+                colorInput.value = q.color;
+                colorInput.addEventListener('change', (e) => {
+                    q.color = e.target.value;
+                    quadrantBg.style.backgroundColor = e.target.value;
+                });
+
+                const colorEmoji = document.createElement('span');
+                colorEmoji.className = 'quadrant-color-emoji';
+                colorEmoji.innerHTML = '✏️';
+                colorEmoji.addEventListener('click', () => colorInput.click());
+
+                labelContainer.appendChild(labelEl);
+                labelContainer.appendChild(colorInput);
+                labelContainer.appendChild(colorEmoji);
+                
+                if (q.id.startsWith('top')) {
+                    topLabelsContainer.appendChild(labelContainer);
+                } else {
+                    bottomLabelsContainer.appendChild(labelContainer);
+                }
+            });
+
+            items.forEach(item => {
+                if (item.x !== null && item.y !== null) {
+                    const itemEl = createItemElement(item);
+                    itemEl.style.position = 'absolute';
+                    itemEl.style.left = `${item.x - 40}px`;
+                    itemEl.style.top = `${item.y - 40}px`;
+                    graphViewContainer.appendChild(itemEl);
+                }
+            });
+
+            graphViewContainer.addEventListener('dragover', handleDragOver);
+            graphViewContainer.addEventListener('dragenter', handleDragEnter);
+            graphViewContainer.addEventListener('dragleave', handleDragLeave);
+            graphViewContainer.addEventListener('drop', handleDrop);
+        }
         
         
         function createHearts() {
+            if (!document.querySelector('.title-container')) return;
             const heartSymbols = ['❤️', '💖', '💕', '💗', '💓', '💞', '💝'];
             const containerWidth = document.querySelector('.title-container').offsetWidth;
             
+            heartsContainer.innerHTML = '';
             for (let i = 0; i < 12; i++) {
                 const heart = document.createElement('div');
                 heart.className = 'heart';
@@ -575,23 +862,6 @@
                 heart.style.animationDelay = Math.random() * 6 + 's';
                 heart.style.fontSize = (15 + Math.random() * 15) + 'px';
                 heartsContainer.appendChild(heart);
-            }
-        }
-        
-        
-        function toggleRainbowAnimation() {
-            isRainbowEnabled = !isRainbowEnabled;
-            
-            if (isRainbowEnabled) {
-                mainTitle.classList.add('rainbow-text');
-                mainTitle.style.color = 'transparent';
-                toggleAnimationBtn.textContent = 'Static';
-                heartsContainer.style.display = 'block';
-            } else {
-                mainTitle.classList.remove('rainbow-text');
-                mainTitle.style.color = '#cba6f7';
-                toggleAnimationBtn.textContent = 'Rainbow';
-                heartsContainer.style.display = 'none';
             }
         }
         
@@ -629,7 +899,7 @@
                         renderTiers();
                         renderItemPool();
                     } else {
-                        showToast('You must have at least one tier!', true);
+                        showToast(t('toastOneTierError'), true);
                     }
                 });
                 
@@ -732,7 +1002,7 @@
         function renderItemPool() {
             itemPool.innerHTML = '';
             
-            const poolItems = items.filter(item => item.tierIndex === -1);
+            const poolItems = items.filter(item => item.tierIndex === -1 && item.x === null);
             poolItems.forEach(item => {
                 const itemElement = createItemElement(item);
                 itemPool.appendChild(itemElement);
@@ -785,6 +1055,7 @@
                 items = items.filter(i => i.id !== item.id);
                 renderTiers();
                 renderItemPool();
+                renderGraphView();
             });
             
             itemElement.appendChild(removeBtn);
@@ -821,8 +1092,9 @@
         
         function handleDragEnter(e) {
             e.preventDefault();
-            this.classList.add('drop-zone-hover');
-            dragOverElement = this;
+            if (e.currentTarget.classList.contains('graph-view-container') || e.currentTarget.id === 'item-pool' || e.currentTarget.classList.contains('tier-content')) {
+                e.currentTarget.classList.add('drop-zone-hover');
+            }
         }
         
         function handleDragLeave(e) {
@@ -834,45 +1106,33 @@
         
         function handleDrop(e) {
             e.preventDefault();
-            this.classList.remove('drop-zone-hover');
+            e.currentTarget.classList.remove('drop-zone-hover');
             
             const itemId = e.dataTransfer.getData('text/plain');
-            let tierIndex;
-            
-            
-            if (this === itemPool) {
-                tierIndex = -1; 
-            } else {
-                tierIndex = parseInt(this.getAttribute('data-tier-index'));
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            const target = e.currentTarget;
+
+            if (target.classList.contains('graph-view-container')) {
+                const rect = graphViewContainer.getBoundingClientRect();
+                item.x = e.clientX - rect.left;
+                item.y = e.clientY - rect.top;
+                item.tierIndex = -1;
+            } else if (target.id === 'item-pool') {
+                item.tierIndex = -1;
+                item.x = null;
+                item.y = null;
+            } else if (target.classList.contains('tier-content')) {
+                const tierIndex = parseInt(target.getAttribute('data-tier-index'));
+                item.tierIndex = tierIndex;
+                item.x = null;
+                item.y = null;
             }
             
-            
-            const itemIndex = items.findIndex(item => item.id === itemId);
-            if (itemIndex !== -1) {
-                items[itemIndex].tierIndex = tierIndex;
-                
-                
-                if (draggedItem && draggedItem.parentElement === this && tierIndex !== -1) {
-                    const targetItem = e.target.closest('.item');
-                    if (targetItem && targetItem !== draggedItem) {
-                        const targetItemId = targetItem.getAttribute('data-item-id');
-                        const targetIndexInItems = items.findIndex(item => item.id === targetItemId);
-                        
-                        if (targetIndexInItems !== -1 && items[targetIndexInItems].tierIndex === tierIndex) {
-                            const draggedItemData = items.splice(itemIndex, 1)[0];
-                            const newTargetIndex = items.findIndex(item => item.id === targetItemId);
-
-                            const rect = targetItem.getBoundingClientRect();
-                            const isAfter = e.clientX > rect.left + rect.width / 2;
-
-                            items.splice(newTargetIndex + (isAfter ? 1 : 0), 0, draggedItemData);
-                        }
-                    }
-                }
-                
-                renderTiers();
-                renderItemPool();
-            }
+            renderTiers();
+            renderItemPool();
+            renderGraphView();
         }
         
         
@@ -900,7 +1160,8 @@
             const tierlistData = {
                 title: tierlistTitle.value,
                 tiers: tiers,
-                items: items
+                items: items,
+                quadrantLabels: quadrantLabels
             };
             
             const dataStr = JSON.stringify(tierlistData, null, 2);
@@ -915,22 +1176,53 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
+
+        function exportAsPng() {
+            const element = isGraphView ? document.getElementById('graph-mode-wrapper') : document.getElementById('tierlist');
+            const filename = isGraphView ? 'graph.png' : 'tierlist.png';
+
+            html2canvas(element, {
+                backgroundColor: '#1e1e2e',
+                allowTaint: true,
+                useCORS: true,
+                onclone: (clonedDoc) => {
+                    clonedDoc.querySelectorAll('.item img').forEach(img => {
+                        if (!img.complete || img.naturalHeight === 0) {
+                            img.style.display = 'none';
+                            const textEl = img.closest('.item').querySelector('.item-text');
+                            if (textEl) {
+                                textEl.style.maxHeight = 'none';
+                            }
+                        }
+                    });
+                }
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error('Error exporting as PNG:', err);
+                showToast(t('toastPngError'), true);
+            });
+        }
         
         
         function copyTierlistToClipboard() {
             const tierlistData = {
                 title: tierlistTitle.value,
                 tiers: tiers,
-                items: items
+                items: items,
+                quadrantLabels: quadrantLabels
             };
             
             const dataStr = JSON.stringify(tierlistData, null, 2);
             
             navigator.clipboard.writeText(dataStr).then(() => {
-                showToast('Tierlist JSON copied to clipboard!');
+                showToast(t('toastCopied'));
             }).catch(err => {
                 console.error('Failed to copy: ', err);
-                showToast('Failed to copy to clipboard. Please try again.', true);
+                showToast(t('toastCopyFailed'), true);
             });
         }
         
@@ -948,15 +1240,27 @@
                 }
                 
                 if (Array.isArray(data.items)) {
-                    items = data.items;
+                    items = data.items.map(item => ({
+                        ...item,
+                        x: item.x,
+                        y: item.y
+                    }));
+                }
+
+                if (Array.isArray(data.quadrantLabels)) {
+                    quadrantLabels = data.quadrantLabels.map((q, i) => ({
+                        ...defaultQuadrantLabels[i],
+                        ...q
+                    }));
                 }
                 
                 renderTiers();
                 renderItemPool();
-                showToast('Tierlist imported successfully!');
+                renderGraphView();
+                showToast(t('toastImportSuccess'));
             } catch (error) {
                 console.error('Error importing tierlist:', error);
-                showToast('Error importing tierlist. Please check the JSON format.', true);
+                showToast(t('toastImportError'), true);
             }
         }
         
@@ -979,7 +1283,7 @@
                 const imageFile = itemImageFileInput.files[0];
 
                 if (!text && !imageUrl && !imageFile) {
-                    showToast('Please provide either text, an image URL, or upload an image for the item.', true);
+                    showToast(t('toastItemCreateError'), true);
                     return;
                 }
 
@@ -990,15 +1294,17 @@
                             id: 'item-' + Date.now(),
                             text: text || '',
                             imageUrl: e.target.result,
-                            tierIndex: -1
+                            tierIndex: -1,
+                            x: null,
+                            y: null
                         };
                         items.push(newItem);
                         renderItemPool();
                         clearItemInputs();
-                        showToast('Image uploaded successfully!');
+                        showToast(t('toastImageUploadSuccess'));
                     };
                     reader.onerror = () => {
-                        showToast('Error reading the uploaded file.', true);
+                        showToast(t('toastImageUploadError'), true);
                     };
                     reader.readAsDataURL(imageFile);
                 } else {
@@ -1006,23 +1312,27 @@
                         id: 'item-' + Date.now(),
                         text: text || '',
                         imageUrl: imageUrl || '',
-                        tierIndex: -1
+                        tierIndex: -1,
+                        x: null,
+                        y: null
                     };
                     items.push(newItem);
                     renderItemPool();
                     clearItemInputs();
-                    showToast('Item created successfully!');
+                    showToast(t('toastItemCreateSuccess'));
                 }
             });
             
             
             resetAllBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to reset everything? This will remove all items and reset tiers to default.')) {
+                if (confirm(t('resetConfirm'))) {
                     tiers = JSON.parse(JSON.stringify(defaultTiers));
                     items = [];
-                    tierlistTitle.value = 'My Tierlist';
+                    tierlistTitle.value = t('myTierlist');
+                    quadrantLabels = JSON.parse(JSON.stringify(defaultQuadrantLabels));
                     renderTiers();
                     renderItemPool();
+                    renderGraphView();
                 }
             });
             
@@ -1051,6 +1361,7 @@
             });
             
             
+            exportPngBtn.addEventListener('click', exportAsPng);
             exportJsonBtn.addEventListener('click', exportTierlist);
             copyJsonBtn.addEventListener('click', copyTierlistToClipboard);
             
@@ -1075,12 +1386,35 @@
                     importTierlist(jsonText);
                     importTextArea.value = '';
                 } else {
-                    showToast('Please paste JSON data in the text area.', true);
+                    showToast(t('pasteJsonPlaceholder'), true);
                 }
             });
             
+            langSwitchBtn.addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'en' ? 'es' : 'en';
+                applyTranslations();
+            });
             
-            toggleAnimationBtn.addEventListener('click', toggleRainbowAnimation);
+            toggleViewBtn.addEventListener('click', toggleView);
+            backToTierlistBtn.addEventListener('click', toggleView);
+        }
+
+        function toggleView() {
+            isGraphView = !isGraphView;
+
+            const tierlistElements = [tierlistContainer, document.querySelector('.controls'), tierlistTitle];
+            
+            if (isGraphView) {
+                tierlistElements.forEach(el => el.classList.add('hidden'));
+                graphModeWrapper.classList.remove('hidden');
+                backToTierlistBtn.classList.remove('hidden');
+                document.querySelector('.export-import').classList.remove('hidden');
+            } else {
+                tierlistElements.forEach(el => el.classList.remove('hidden'));
+                graphModeWrapper.classList.add('hidden');
+                backToTierlistBtn.classList.add('hidden');
+                document.querySelector('.export-import').classList.remove('hidden');
+            }
         }
         
         
