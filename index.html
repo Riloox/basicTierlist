@@ -563,7 +563,7 @@
             <button id="add-tier">Add Tier</button>
             <button id="reset-all">Reset All</button>
             <button id="toggle-view">Graph View</button>
-            <button id="lang-switch">Español</button>
+            <button id="lang-switch">Espa&ntilde;ol</button>
         </div>
         
         <div class="tierlist-container" id="tierlist">
@@ -618,7 +618,7 @@
                 addTier: "Add Tier",
                 resetAll: "Reset All",
                 graphView: "Graph View",
-                langSwitch: "Español",
+                langSwitch: "Espa\u00f1ol",
                 itemPoolTitle: "Item Pool",
                 itemTextPlaceholder: "Item text (optional)",
                 imageUrlPlaceholder: "Image URL (optional)",
@@ -649,17 +649,17 @@
             },
             es: {
                 appTitle: "Creador de Tierlists de Riloox",
-                tierlistTitlePlaceholder: "Introduce el título de la tierlist",
+                tierlistTitlePlaceholder: "Introduce el t\u00edtulo de la tierlist",
                 myTierlist: "Mi Tierlist",
                 backToTierlist: "Volver a la Tierlist",
-                addTier: "Añadir Fila",
+                addTier: "A\u00f1adir Fila",
                 resetAll: "Reiniciar Todo",
-                graphView: "Vista de Gráfico",
+                graphView: "Vista de Gr\u00e1fico",
                 langSwitch: "English",
-                itemPoolTitle: "Banco de Ítems",
-                itemTextPlaceholder: "Texto del ítem (opcional)",
+                itemPoolTitle: "Banco de \u00cdtems",
+                itemTextPlaceholder: "Texto del \u00edtem (opcional)",
                 imageUrlPlaceholder: "URL de la imagen (opcional)",
-                createItem: "Crear Ítem",
+                createItem: "Crear \u00edtem",
                 uploadImage: "Subir Imagen",
                 exportImportTitle: "Exportar & Importar",
                 exportPng: "Exportar como PNG",
@@ -667,23 +667,23 @@
                 copyJson: "Copiar JSON al Portapapeles",
                 importFile: "Importar desde Archivo",
                 importText: "Importar desde Texto",
-                pasteJsonPlaceholder: "Pega los datos JSON aquí para importar",
+                pasteJsonPlaceholder: "Pega los datos JSON aqu\u00ed para importar",
                 quadrantTopLeft: "Arriba Izquierda",
                 quadrantTopRight: "Arriba Derecha",
                 quadrantBottomLeft: "Abajo Izquierda",
                 quadrantBottomRight: "Abajo Derecha",
-                resetConfirm: "¿Estás seguro de que quieres reiniciarlo todo? Esto eliminará todos los ítems y restaurará las filas a sus valores predeterminados.",
-                toastCopied: "¡JSON de la tierlist copiado al portapapeles!",
-                toastCopyFailed: "Error al copiar al portapapeles. Por favor, inténtalo de nuevo.",
-                toastImportSuccess: "¡Tierlist importada con éxito!",
+                resetConfirm: "\u00bfEst\u00e1s seguro de que quieres reiniciarlo todo? Esto eliminar\u00e1 todos los \u00edtems y restaurar\u00e1 las filas a sus valores predeterminados.",
+                toastCopied: "\u00a1JSON de la tierlist copiado al portapapeles!",
+                toastCopyFailed: "Error al copiar al portapapeles. Por favor, int\u00e9ntalo de nuevo.",
+                toastImportSuccess: "\u00a1Tierlist importada con \u00e9xito!",
                 toastImportError: "Error al importar la tierlist. Por favor, comprueba el formato del JSON.",
-                toastItemCreateSuccess: "¡Ítem creado con éxito!",
-                toastItemCreateError: "Por favor, proporciona un texto, una URL de imagen o sube una imagen para el ítem.",
-                toastImageUploadSuccess: "¡Imagen subida con éxito!",
+                toastItemCreateSuccess: "\u00a1\u00cdtem creado con \u00e9xito!",
+                toastItemCreateError: "Por favor, proporciona un texto, una URL de imagen o sube una imagen para el \u00edtem.",
+                toastImageUploadSuccess: "\u00a1Imagen subida con \u00e9xito!",
                 toastImageUploadError: "Error al leer el archivo subido.",
-                toastOneTierError: "¡Debes tener al menos una fila!",
-                toastPngError: "No se pudo exportar como PNG. Revisa la consola para más detalles."
-            }
+                toastOneTierError: "\u00a1Debes tener al menos una fila!",
+                toastPngError: "No se pudo exportar como PNG. Revisa la consola para m\u00e1s detalles."
+            }            }
         };
 
         let currentLanguage = 'en';
@@ -893,22 +893,31 @@
                 
                 const tierRemoveBtn = document.createElement('button');
                 tierRemoveBtn.className = 'tier-remove';
-                tierRemoveBtn.innerHTML = '×';
+                tierRemoveBtn.innerHTML = '&times;';
                 tierRemoveBtn.addEventListener('click', () => {
                     if (tiers.length > 1) {
-                        
-                        const tierItems = items.filter(item => item.tierIndex === index);
-                        tierItems.forEach(item => {
-                            item.tierIndex = -1;
+                        const removedIndex = index;
+
+                        let poolOrder = items.filter(item => item.tierIndex === -1).length;
+
+                        items.forEach(item => {
+                            if (item.tierIndex === removedIndex) {
+                                item.tierIndex = -1;
+                                item.order = poolOrder++;
+                            } else if (item.tierIndex > removedIndex) {
+                                item.tierIndex -= 1;
+                            }
                         });
-                        tiers.splice(index, 1);
+
+                        tiers.splice(removedIndex, 1);
                         renderTiers();
                         renderItemPool();
+                        renderGraphView();
                     } else {
                         showToast(t('toastOneTierError'), true);
                     }
                 });
-                
+
                 const tierColorInput = document.createElement('input');
                 tierColorInput.type = 'color';
                 tierColorInput.className = 'tier-color';
@@ -1008,7 +1017,9 @@
         function renderItemPool() {
             itemPool.innerHTML = '';
             
-            const poolItems = items.filter(item => item.tierIndex === -1 && item.x === null);
+            const poolItems = items
+                .filter(item => item.tierIndex === -1)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
             poolItems.forEach(item => {
                 const itemElement = createItemElement(item);
                 itemPool.appendChild(itemElement);
@@ -1055,16 +1066,28 @@
             
             const removeBtn = document.createElement('button');
             removeBtn.className = 'item-remove';
-            removeBtn.innerHTML = '×';
+            removeBtn.innerHTML = '&times;';
             removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                items = items.filter(i => i.id !== item.id);
+                const isInPool = item.tierIndex === -1 && item.x === null && item.y === null;
+
+                if (isInPool) {
+                    items = items.filter(i => i.id !== item.id);
+                } else {
+                    const poolItems = items.filter(i => i.tierIndex === -1);
+                    item.tierIndex = -1;
+                    item.x = null;
+                    item.y = null;
+                    item.order = poolItems.length;
+                }
+
                 renderTiers();
                 renderItemPool();
                 renderGraphView();
             });
-            
+
             itemElement.appendChild(removeBtn);
+
             
             
             itemElement.addEventListener('dragstart', handleDragStart);
@@ -1136,46 +1159,50 @@
 
             const target = e.currentTarget;
             const dropTargetItemElement = e.target.closest('.item');
+            const targetTierContent = dropTargetItemElement ? dropTargetItemElement.closest('.tier-content') : (target.classList.contains('tier-content') ? target : null);
+            const targetTierIndex = targetTierContent ? parseInt(targetTierContent.getAttribute('data-tier-index')) : null;
 
-            if (dropTargetItemElement && dropTargetItemElement !== draggedItem) {
-                const dropTargetItemId = dropTargetItemElement.getAttribute('data-item-id');
-                const dropTargetItemObject = items.find(i => i.id === dropTargetItemId);
-
-                if (dropTargetItemObject && draggedItemObject.tierIndex === dropTargetItemObject.tierIndex) {
-                    const tierContent = dropTargetItemElement.parentElement;
-                    const rect = dropTargetItemElement.getBoundingClientRect();
-                    const isRightHalf = e.clientX > rect.left + rect.width / 2;
-
-                    if (isRightHalf) {
-                        tierContent.insertBefore(draggedItem, dropTargetItemElement.nextSibling);
-                    } else {
-                        tierContent.insertBefore(draggedItem, dropTargetItemElement);
-                    }
-
-                    const tierIndex = draggedItemObject.tierIndex;
-                    const tierItems = Array.from(tierContent.children).map(el => el.getAttribute('data-item-id'));
-                    tierItems.forEach((itemId, i) => {
-                        const item = items.find(it => it.id === itemId);
-                        if (item) {
-                            item.order = i;
-                        }
-                    });
-                }
-            } else if (target.classList.contains('graph-view-container')) {
+            if (target.classList.contains('graph-view-container')) {
                 const rect = graphViewContainer.getBoundingClientRect();
-                draggedItemObject.x = e.clientX - rect.left;
-                draggedItemObject.y = e.clientY - rect.top;
+                const padding = 20;
+                const clampedX = Math.min(Math.max(e.clientX - rect.left, padding), rect.width - padding);
+                const clampedY = Math.min(Math.max(e.clientY - rect.top, padding), rect.height - padding);
+                draggedItemObject.x = clampedX;
+                draggedItemObject.y = clampedY;
                 draggedItemObject.tierIndex = -1;
+            } else if (dropTargetItemElement && targetTierContent) {
+                const rect = dropTargetItemElement.getBoundingClientRect();
+                const isRightHalf = e.clientX > rect.left + rect.width / 2;
+
+                if (isRightHalf) {
+                    targetTierContent.insertBefore(draggedItem, dropTargetItemElement.nextSibling);
+                } else {
+                    targetTierContent.insertBefore(draggedItem, dropTargetItemElement);
+                }
+
+                draggedItemObject.tierIndex = targetTierIndex;
+                draggedItemObject.x = null;
+                draggedItemObject.y = null;
+
+                const orderedIds = Array.from(targetTierContent.querySelectorAll('.item')).map(el => el.getAttribute('data-item-id'));
+                orderedIds.forEach((id, idx) => {
+                    const item = items.find(it => it.id === id);
+                    if (item) {
+                        item.order = idx;
+                    }
+                });
             } else if (target.id === 'item-pool') {
+                const poolItems = items.filter(i => i.tierIndex === -1 && i.id !== draggedItemObject.id);
                 draggedItemObject.tierIndex = -1;
                 draggedItemObject.x = null;
                 draggedItemObject.y = null;
+                draggedItemObject.order = poolItems.length;
             } else if (target.classList.contains('tier-content')) {
                 const tierIndex = parseInt(target.getAttribute('data-tier-index'));
+                const tierItems = items.filter(i => i.tierIndex === tierIndex && i.id !== draggedItemObject.id);
                 draggedItemObject.tierIndex = tierIndex;
                 draggedItemObject.x = null;
                 draggedItemObject.y = null;
-                const tierItems = items.filter(i => i.tierIndex === tierIndex);
                 draggedItemObject.order = tierItems.length;
             }
             
@@ -1456,28 +1483,32 @@
 
             const tierlistElements = [tierlistContainer, document.querySelector('.controls'), tierlistTitle];
             
-            if (isGraphView) {
-                tierlistItems = JSON.parse(JSON.stringify(items));
-                items.forEach(item => {
-                    if (item.tierIndex !== -1 && item.x === null && item.y === null) {
-                        item.x = Math.random() * (graphViewContainer.offsetWidth - 80) + 40;
-                        item.y = Math.random() * (graphViewContainer.offsetHeight - 80) + 40;
-                    }
-                });
-                renderGraphView();
-                tierlistElements.forEach(el => el.classList.add('hidden'));
-                graphModeWrapper.classList.remove('hidden');
-                backToTierlistBtn.classList.remove('hidden');
-                document.querySelector('.item-pool').classList.add('hidden');
-            } else {
-                items = JSON.parse(JSON.stringify(tierlistItems));
-                renderTiers();
-                renderItemPool();
-                tierlistElements.forEach(el => el.classList.remove('hidden'));
-                graphModeWrapper.classList.add('hidden');
-                backToTierlistBtn.classList.add('hidden');
-                document.querySelector('.item-pool').classList.remove('hidden');
-            }
+        if (isGraphView) {
+            tierlistItems = JSON.parse(JSON.stringify(items));
+            const graphWidth = graphViewContainer.clientWidth || graphViewContainer.offsetWidth || 800;
+            const graphHeight = graphViewContainer.clientHeight || graphViewContainer.offsetHeight || 600;
+            const padding = 40;
+
+            items.forEach(item => {
+                if (item.x === null || item.y === null) {
+                    item.x = Math.random() * (graphWidth - padding * 2) + padding;
+                    item.y = Math.random() * (graphHeight - padding * 2) + padding;
+                }
+            });
+
+            renderGraphView();
+            tierlistElements.forEach(el => el.classList.add('hidden'));
+            graphModeWrapper.classList.remove('hidden');
+            backToTierlistBtn.classList.remove('hidden');
+            document.querySelector('.item-pool').classList.add('hidden');
+        } else {
+            renderTiers();
+            renderItemPool();
+            tierlistElements.forEach(el => el.classList.remove('hidden'));
+            graphModeWrapper.classList.add('hidden');
+            backToTierlistBtn.classList.add('hidden');
+            document.querySelector('.item-pool').classList.remove('hidden');
+        }
         }
         
         
